@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Signs — Crate Planner</title>
+<style>
+/* ─────────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange: #FF5100;
+  --black:  #101820;
+  --g1:     #1a2330;
+  --g2:     #28333f;
+  --g3:     #38454f;
+  --g4:     #6b7885;
+  --g5:     #9aa5b0;
+  --g6:     #d0d8e0;
+  --white:  #ffffff;
+  --warn:   #f59e0b;
+  --info:   #38bdf8;
+  --ok:     #34d399;
+  --r:      8px;
+  --rl:     12px;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--black);
+  color: var(--white);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─────────────────────────────────────────────
+   LAYOUT SHELL
+───────────────────────────────────────────── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* HEADER */
+header {
+  flex: 0 0 auto;
+  background: var(--g1);
+  border-bottom: 1px solid var(--g2);
+  padding: 0 1.5rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .02em;
+}
+.logo-box {
+  width: 30px; height: 30px;
+  background: var(--orange);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+}
+.logo-sep { color: var(--g3); margin: 0 2px; }
+.logo-sub { color: var(--g4); font-weight: 400; font-size: 13px; }
+
+.btn-print {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: var(--g2);
+  border: 1px solid var(--g3);
+  border-radius: var(--r);
+  color: var(--g5);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-print:hover { background: var(--g3); color: var(--white); }
+
+/* MAIN */
+.main {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.left {
+  background: var(--g1);
+  border-right: 1px solid var(--g2);
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+/* RIGHT PANEL */
+.right {
+  background: var(--black);
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+/* ─────────────────────────────────────────────
+   LEFT: FORM ELEMENTS
+───────────────────────────────────────────── */
+.slabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--g4);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--g2);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.fgroup { margin-bottom: 1.25rem; }
+
+.field { margin-bottom: 10px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--g5);
+  margin-bottom: 4px;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--g2);
+  border: 1px solid var(--g3);
+  border-radius: var(--r);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 13px;
+  transition: border-color .15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--orange);
+  background: var(--g2);
+}
+.unit { font-size: 10px; color: var(--g4); margin-top: 3px; }
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 1rem;
+}
+.badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 500;
+}
+.b-warn  { color: var(--warn); border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.1); }
+.b-info  { color: var(--info); border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.1); }
+.b-ok    { color: var(--ok);   border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.1); }
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.price-row label { font-size: 11px; color: var(--g5); flex: 1; }
+.price-row input { width: 85px; text-align: right; }
+.price-pfx { font-size: 11px; color: var(--g4); white-space: nowrap; }
+
+/* ─────────────────────────────────────────────
+   RIGHT: OUTPUT
+───────────────────────────────────────────── */
+.canvas-card {
+  background: var(--g1);
+  border: 1px solid var(--g2);
+  border-radius: var(--rl);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.card-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .75rem;
+}
+.card-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--g4);
+}
+.canvas-hint { font-size: 11px; color: var(--g4); }
+
+#c3d {
+  display: block;
+  width: 100%;
+  height: 280px;
+  cursor: grab;
+  border-radius: 6px;
+}
+#c3d:active { cursor: grabbing; }
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+.stat {
+  background: var(--g1);
+  border: 1px solid var(--g2);
+  border-radius: var(--rl);
+  padding: 1rem;
+}
+.stat-lbl { font-size: 10px; color: var(--g4); margin-bottom: 4px; }
+.stat-val { font-size: 20px; font-weight: 700; color: var(--white); line-height: 1; }
+.stat-sub { font-size: 10px; color: var(--g4); margin-top: 4px; font-family: monospace; }
+.stat-hi  { border-color: var(--orange) !important; }
+.stat-hi .stat-val { color: var(--orange); }
+
+/* Two column output */
+.out2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.card {
+  background: var(--g1);
+  border: 1px solid var(--g2);
+  border-radius: var(--rl);
+  padding: 1.1rem;
+}
+
+/* Mat table */
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--g4);
+  text-align: left;
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--g2);
+}
+th:last-child { text-align: right; }
+td {
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+td:nth-child(2) { color: var(--g4); font-size: 11px; font-family: monospace; }
+td:last-child   { text-align: right; font-family: monospace; font-weight: 600; }
+tfoot td {
+  border-top: 1px solid var(--g3) !important;
+  border-bottom: none !important;
+  padding-top: 10px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+
+.mtag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 99px;
+  margin-right: 5px;
+  vertical-align: middle;
+  font-family: monospace;
+}
+.mt-b { background: rgba(245,158,11,.15); color: var(--warn); }
+.mt-w { background: rgba(56,189,248,.15); color: var(--info); }
+.mt-p { background: rgba(52,211,153,.15); color: var(--ok); }
+.mt-h { background: rgba(155,155,155,.12); color: var(--g5); }
+
+/* Cut list */
+.csect {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin: 12px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--g2);
+}
+.csect:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+.crow {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: 12px;
+  align-items: center;
+}
+.crow:last-child { border-bottom: none; }
+.cpcs { color: var(--g4); font-family: monospace; font-size: 11px; text-align: right; }
+.clen { font-family: monospace; font-weight: 600; text-align: right; }
+
+/* Notes */
+.notes {
+  background: rgba(245,158,11,.06);
+  border: 1px solid rgba(245,158,11,.2);
+  border-radius: var(--r);
+  padding: .75rem 1rem;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--g5);
+}
+.notes .w { color: var(--warn); font-weight: 600; }
+
+/* ─────────────────────────────────────────────
+   PRINT
+───────────────────────────────────────────── */
+@media print {
+  @page { margin: 1.4cm; size: letter; }
+  body { background: #fff !important; color: #000 !important; }
+  header, .left { display: none !important; }
+  .shell, .main { display: block !important; height: auto !important; overflow: visible !important; }
+  .right { padding: 0 !important; overflow: visible !important; }
+  .card, .stat, .canvas-card, .notes {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+  .stat-val, .clen, td:last-child { color: #000 !important; }
+  .stat-hi { border-color: #FF5100 !important; }
+  .stat-hi .stat-val { color: #FF5100 !important; }
+  .g4-txt { color: #666 !important; }
+  .phdr { display: flex !important; justify-content: space-between; border-bottom: 2px solid #FF5100; padding-bottom: 10px; margin-bottom: 14px; }
+  .phdr-l h1 { font-size: 18px; color: #FF5100; font-weight: 700; }
+  .phdr-l p  { font-size: 11px; color: #666; }
+  .phdr-r    { text-align: right; font-size: 11px; color: #666; font-family: monospace; }
+  #c3d { height: 200px !important; }
+}
+@media screen { .phdr { display: none; } }
+
+/* responsive */
+@media (max-width: 860px) {
+  .main { grid-template-columns: 1fr; }
+  .shell { height: auto; overflow: auto; }
+  .left, .right { overflow: visible; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .out2  { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-box">AS</div>
+    Access Signs
+    <span class="logo-sep">|</span>
+    <span class="logo-sub">Crate Planner</span>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+      <rect x="6" y="14" width="12" height="8"/>
+    </svg>
+    Print / PDF
+  </button>
+</header>
+
+<div class="main">
+
+<!-- ── LEFT PANEL ── -->
+<div class="left">
+
+  <!-- print header (hidden on screen) -->
+  <div class="phdr">
+    <div class="phdr-l">
+      <h1>Access Signs</h1>
+      <p>Shipping Crate Estimate</p>
+    </div>
+    <div class="phdr-r">
+      <div id="pdate"></div>
+      <div id="pref"></div>
+    </div>
+  </div>
+
+  <span class="slabel">Sign Dimensions</span>
+  <div class="fgroup">
+    <div class="row3" style="margin-bottom:10px">
+      <div class="field">
+        <label>Width</label>
+        <input type="number" id="sw" value="96" min="12" max="300">
+        <div class="unit">inches</div>
+      </div>
+      <div class="field">
+        <label>Height</label>
+        <input type="number" id="sh" value="48" min="12" max="200">
+        <div class="unit">inches</div>
+      </div>
+      <div class="field">
+        <label>Depth</label>
+        <input type="number" id="sd" value="8" min="2" max="60">
+        <div class="unit">inches</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Padding clearance</label>
+      <select id="pad">
+        <option value="2">2" — Standard</option>
+        <option value="3" selected>3" — Recommended</option>
+        <option value="4">4" — Fragile / Long-haul</option>
+        <option value="6">6" — Max protection</option>
+      </select>
+    </div>
+  </div>
+
+  <span class="slabel">Material Spec (fixed)</span>
+  <div class="badges" style="margin-bottom:1.25rem">
+    <span class="badge b-warn">Base: 2×3</span>
+    <span class="badge b-info">Walls &amp; lid: 1×3</span>
+    <span class="badge b-ok">Sheathing: ¼" OSB</span>
+  </div>
+
+  <span class="slabel">Supplier Prices — CAD</span>
+  <div class="fgroup">
+    <div class="price-row">
+      <label>2×3 lumber</label>
+      <span class="price-pfx">$/lft</span>
+      <input type="number" id="p23" value="0.65" min="0.10" step="0.01" style="width:80px">
+    </div>
+    <div class="price-row">
+      <label>1×3 lumber</label>
+      <span class="price-pfx">$/lft</span>
+      <input type="number" id="p13" value="0.38" min="0.10" step="0.01" style="width:80px">
+    </div>
+    <div class="price-row">
+      <label>¼" OSB / sheet</label>
+      <span class="price-pfx">$/sht</span>
+      <input type="number" id="posb" value="18" min="5" step="0.50" style="width:80px">
+    </div>
+    <div class="price-row">
+      <label>Screws (1 lb box)</label>
+      <span class="price-pfx">$/box</span>
+      <input type="number" id="pscr" value="10" min="1" step="0.50" style="width:80px">
+    </div>
+  </div>
+
+  <span class="slabel">Labour</span>
+  <div class="fgroup">
+    <div class="field">
+      <label>Shop rate</label>
+      <select id="lrate">
+        <option value="45">$45/hr — Shop helper</option>
+        <option value="60" selected>$60/hr — Skilled</option>
+        <option value="75">$75/hr — Senior</option>
+      </select>
+    </div>
+  </div>
+
+</div><!-- /left -->
+
+<!-- ── RIGHT PANEL ── -->
+<div class="right">
+
+  <!-- 3D Canvas -->
+  <div class="canvas-card">
+    <div class="card-hdr">
+      <span class="card-title">3D Crate Preview</span>
+      <span class="canvas-hint">drag to rotate</span>
+    </div>
+    <canvas id="c3d"></canvas>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-lbl">Material cost</div>
+      <div class="stat-val" id="s-mat">—</div>
+      <div class="stat-sub">CAD before tax</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Build time</div>
+      <div class="stat-val" id="s-time">—</div>
+      <div class="stat-sub">shop hours</div>
+    </div>
+    <div class="stat stat-hi">
+      <div class="stat-lbl">Total crate cost</div>
+      <div class="stat-val" id="s-total">—</div>
+      <div class="stat-sub">mat + labour</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Labour cost</div>
+      <div class="stat-val" id="s-labour">—</div>
+      <div class="stat-sub">at selected rate</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Outer dims W×H×D</div>
+      <div class="stat-val" id="s-dims" style="font-size:14px;padding-top:3px">—</div>
+      <div class="stat-sub">inches</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Empty weight</div>
+      <div class="stat-val" id="s-wt">—</div>
+      <div class="stat-sub">lbs (crate only)</div>
+    </div>
+  </div>
+
+  <!-- Materials + Cut list -->
+  <div class="out2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.75rem">Materials List</div>
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Cost</th></tr></thead>
+        <tbody id="matbody"></tbody>
+        <tfoot id="matfoot"></tfoot>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.75rem">Cut List</div>
+      <div id="cutlist"></div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes" id="notesbox">Adjust dimensions on the left to generate the estimate.</div>
+
+</div><!-- /right -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+/* ══════════════════════════════════════════════
+   3D ENGINE — no external deps
+══════════════════════════════════════════════ */
+var cvs = document.getElementById('c3d');
+var ctx = cvs.getContext('2d');
+var rotX = 0.40, rotY = 0.50;
+var drag = false, lx = 0, ly = 0;
+var CW, CH, cW = 0, cH = 0, cD = 0;
+
+cvs.addEventListener('mousedown', function(e){ drag=true; lx=e.clientX; ly=e.clientY; });
+document.addEventListener('mousemove', function(e){
+  if(!drag) return;
+  rotY += (e.clientX-lx)*0.013;
+  rotX -= (e.clientY-ly)*0.013;
+  rotX = Math.max(-1.2, Math.min(1.2, rotX));
+  lx=e.clientX; ly=e.clientY;
+  draw3D();
+});
+document.addEventListener('mouseup', function(){ drag=false; });
+cvs.addEventListener('touchstart', function(e){ drag=true; lx=e.touches[0].clientX; ly=e.touches[0].clientY; e.preventDefault(); },{passive:false});
+cvs.addEventListener('touchmove', function(e){
+  if(!drag) return;
+  rotY += (e.touches[0].clientX-lx)*0.013;
+  rotX -= (e.touches[0].clientY-ly)*0.013;
+  rotX = Math.max(-1.2, Math.min(1.2, rotX));
+  lx=e.touches[0].clientX; ly=e.touches[0].clientY;
+  draw3D(); e.preventDefault();
+},{passive:false});
+cvs.addEventListener('touchend', function(){ drag=false; });
+
+function proj(x,y,z) {
+  var cx=Math.cos(rotX), sx=Math.sin(rotX);
+  var cy=Math.cos(rotY), sy=Math.sin(rotY);
+  var ry=y*cx-z*sx, rz=y*sx+z*cx;
+  var rx2=x*cy+rz*sy, ry2=ry, rz2=-x*sy+rz*cy;
+  var fov=700, pz=rz2+fov;
+  return { x: CW/2 + rx2*fov/pz, y: CH/2 + ry2*fov/pz, z: rz2 };
+}
+
+function drawFace(pts, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = fill;   ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 0.7; ctx.stroke();
+}
+
+function draw3D() {
+  var dpr = window.devicePixelRatio || 1;
+  CW = cvs.offsetWidth;
+  CH = cvs.offsetHeight;
+  cvs.width  = CW * dpr;
+  cvs.height = CH * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,CW,CH);
+  if(!cW || !cH || !cD) return;
+
+  var maxD = Math.max(cW,cH,cD);
+  var sc   = Math.min(CW,CH) * 0.27 / maxD;
+  var w=cW*sc, h=cH*sc, d=cD*sc;
+  var hw=w/2, hh=h/2, hd=d/2;
+  var baseH = sc * 3.5;
+
+  /* 8 corners of full box */
+  var v = [
+    [-hw,-hh,-hd],[hw,-hh,-hd],[hw,hh,-hd],[-hw,hh,-hd],
+    [-hw,-hh,hd],[hw,-hh,hd],[hw,hh,hd],[-hw,hh,hd]
+  ].map(function(p){ return proj(p[0],p[1],p[2]); });
+
+  /* 8 corners of base strip (bottom fraction) */
+  var bt = hh - baseH;
+  var bv = [
+    [-hw,bt,-hd],[hw,bt,-hd],[hw,hh,-hd],[-hw,hh,-hd],
+    [-hw,bt,hd],[hw,bt,hd],[hw,hh,hd],[-hw,hh,hd]
+  ].map(function(p){ return proj(p[0],p[1],p[2]); });
+
+  /* wall tones */
+  var wc = ['#9a7a50','#78593a','#b08860','#5c3e22'];
+  /* base tones — darker */
+  var bc = ['#5c3c18','#402810','#704822','#301e08'];
+
+  var wallFaces = [
+    {i:[3,2,1,0],c:wc[1]},{i:[4,5,6,7],c:wc[2]},
+    {i:[0,1,5,4],c:wc[0]},{i:[2,3,7,6],c:wc[0]},
+    {i:[1,2,6,5],c:wc[1]},{i:[0,4,7,3],c:wc[2]}
+  ];
+  wallFaces.sort(function(a,b){
+    return b.i.reduce(function(s,x){return s+v[x].z;},0) - a.i.reduce(function(s,x){return s+v[x].z;},0);
+  });
+  wallFaces.forEach(function(f){ drawFace(f.i.map(function(x){return v[x];}), f.c, wc[3]); });
+
+  var baseFaces = [
+    {i:[3,2,1,0],c:bc[1]},{i:[4,5,6,7],c:bc[2]},
+    {i:[0,1,5,4],c:bc[0]},{i:[2,3,7,6],c:bc[0]},
+    {i:[1,2,6,5],c:bc[1]},{i:[0,4,7,3],c:bc[2]}
+  ];
+  baseFaces.sort(function(a,b){
+    return b.i.reduce(function(s,x){return s+bv[x].z;},0) - a.i.reduce(function(s,x){return s+bv[x].z;},0);
+  });
+  baseFaces.forEach(function(f){ drawFace(f.i.map(function(x){return bv[x];}), f.c, bc[3]); });
+
+  /* lid gap dashed line */
+  var ly2 = -hh + h*0.20;
+  var lv2 = [proj(-hw,ly2,-hd),proj(hw,ly2,-hd),proj(hw,ly2,hd),proj(-hw,ly2,hd)];
+  ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(lv2[0].x,lv2[0].y);
+  lv2.forEach(function(p){ctx.lineTo(p.x,p.y);});
+  ctx.closePath();
+  ctx.strokeStyle='rgba(255,81,0,0.55)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* base separator */
+  var sv2 = [proj(-hw,bt,-hd),proj(hw,bt,-hd),proj(hw,bt,hd),proj(-hw,bt,hd)];
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(sv2[0].x,sv2[0].y);
+  sv2.forEach(function(p){ctx.lineTo(p.x,p.y);});
+  ctx.closePath();
+  ctx.strokeStyle='rgba(245,158,11,0.55)'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* dimension labels */
+  ctx.font = '500 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillText('W='+Math.round(cW)+'"', (v[0].x+v[1].x)/2, Math.max(v[0].y,v[1].y)+16);
+  ctx.fillText('D='+Math.round(cD)+'"', (v[1].x+v[5].x)/2+18, (v[1].y+v[5].y)/2);
+  ctx.fillText('H='+Math.round(cH)+'"', (v[1].x+v[2].x)/2+18, (v[1].y+v[2].y)/2);
+
+  ctx.font = '10px monospace';
+  ctx.fillStyle = 'rgba(245,158,11,0.7)';
+  ctx.fillText('2x3 base', (sv2[0].x+sv2[1].x)/2, (sv2[0].y+sv2[1].y)/2+13);
+  ctx.fillStyle = 'rgba(255,81,0,0.65)';
+  ctx.fillText('lid', (lv2[0].x+lv2[1].x)/2, (lv2[0].y+lv2[1].y)/2-5);
+}
+
+/* ══════════════════════════════════════════════
+   CALCULATION ENGINE
+══════════════════════════════════════════════ */
+function g(id){ return document.getElementById(id); }
+function pf(id){ return parseFloat(g(id).value) || 0; }
+
+function fmt(n){ return '$' + Math.round(n).toLocaleString('en-CA'); }
+
+function calc() {
+  var sw  = pf('sw')   || 96;
+  var sh  = pf('sh')   || 48;
+  var sd  = pf('sd')   || 8;
+  var pad = pf('pad')  || 3;
+  var p23 = pf('p23')  || 0.65;
+  var p13 = pf('p13')  || 0.38;
+  var posb= pf('posb') || 18;
+  var pscr= pf('pscr') || 10;
+  var lr  = pf('lrate')|| 60;
+
+  /* actual lumber dims */
+  var baseThk = 1.5;  /* 2x3 actual thickness */
+  var wallThk = 0.75; /* 1x3 actual thickness  */
+
+  /* outer crate dims */
+  cW = sw + pad*2 + wallThk*2;
+  cH = sh + pad*2 + baseThk + wallThk;
+  cD = sd + pad*2 + wallThk*2;
+
+  /* ── 2x3 base frame (linear feet) ── */
+  var baseFt = (cW/12)*2 + (cD/12)*4;   /* 2 long + 4 short/cross */
+
+  /* ── 1x3 walls & lid (linear feet) ── */
+  var needsStiff = (cW > 72 || cH > 60);
+  var wallFt = (cH/12)*4 + (cW/12)*2 + (cD/12)*2 + (cW/12)*2;
+  if(needsStiff) wallFt += (cW/12)*2 + (cH/12)*2;
+
+  /* ── 1/4" OSB sheathing ── */
+  var sqFt  = (cW*cD/144)        /* top */
+            + (cW*cD/144)*0.8    /* bottom - forklift cut */
+            + (cW*cH/144)*2      /* front + back */
+            + (cD*cH/144)*2;     /* sides */
+  var sheets = Math.ceil(sqFt / 32);  /* 4x8 sheet = 32 sqft */
+
+  /* ── hardware ── */
+  var screwBx  = Math.ceil((baseFt+wallFt)/40);
+  var straps   = cW > 72 ? 4 : 2;
+  var foamCost = pad>=6?45 : pad>=4?35 : pad>=3?22 : 12;
+  var miscCost = 12;
+
+  /* ── costs ── */
+  var cBase  = baseFt  * p23;
+  var cWall  = wallFt  * p13;
+  var cSheat = sheets  * posb;
+  var cScrew = screwBx * pscr;
+  var cStrap = straps  * 8;
+  var matTot = cBase + cWall + cSheat + cScrew + cStrap + foamCost + miscCost;
+
+  /* ── build time ── */
+  var hrs = 1.25 + baseFt*0.025 + wallFt*0.020 + sheets*0.25;
+  if(needsStiff) hrs += 0.5;
+  hrs = Math.round(hrs * 4) / 4;
+
+  var labourTot = hrs * lr;
+  var totalTot  = matTot + labourTot;
+
+  /* ── weight ── */
+  var wtLbs = Math.round(baseFt*1.1 + wallFt*0.55 + sqFt*0.8 + 4);
+
+  /* ── populate stats ── */
+  g('s-mat').textContent    = fmt(matTot);
+  g('s-time').textContent   = hrs.toFixed(1) + ' h';
+  g('s-total').textContent  = fmt(totalTot);
+  g('s-labour').textContent = fmt(labourTot);
+  g('s-dims').textContent   = Math.round(cW)+' × '+Math.round(cH)+' × '+Math.round(cD);
+  g('s-wt').textContent     = wtLbs + ' lb';
+
+  /* ── materials table ── */
+  var rows = [
+    {tag:'b', label:'2×3 lumber — base frame',  qty: Math.round(baseFt)+' lft', cost: cBase},
+    {tag:'w', label:'1×3 lumber — walls & lid', qty: Math.round(wallFt)+' lft', cost: cWall},
+    {tag:'p', label:'¼" OSB sheathing',          qty: sheets+' sheets',           cost: cSheat},
+    {tag:'h', label:'Screws (1 lb boxes)',       qty: screwBx+' box',             cost: cScrew},
+    {tag:'h', label:'Steel straps',              qty: straps+' pcs',              cost: cStrap},
+    {tag:'h', label:'Foam / edge padding',       qty: pad+'" clearance',          cost: foamCost},
+    {tag:'h', label:'Misc (staples, tape)',      qty: '—',                        cost: miscCost},
+  ];
+  var tagN = {b:'2×3',w:'1×3',p:'OSB',h:'HW'};
+  g('matbody').innerHTML = rows.map(function(r){
+    return '<tr>'
+      +'<td><span class="mtag mt-'+r.tag+'">'+tagN[r.tag]+'</span>'+r.label+'</td>'
+      +'<td>'+r.qty+'</td>'
+      +'<td>'+fmt(r.cost)+'</td>'
+      +'</tr>';
+  }).join('');
+  g('matfoot').innerHTML = '<tr>'
+    +'<td colspan="2">Total materials</td>'
+    +'<td>'+fmt(matTot)+'</td>'
+    +'</tr>';
+
+  /* ── cut list ── */
+  var W = Math.round(cW), H = Math.round(cH), D = Math.round(cD);
+  var cl = '';
+  cl += '<div class="csect">2×3 Base Frame</div>';
+  cl += row('Long base rails',   '2×', W+'"');
+  cl += row('Short base rails',  '2×', D+'"');
+  cl += row('Cross braces',      '2×', D+'"');
+  cl += '<div class="csect">1×3 Walls &amp; Lid</div>';
+  cl += row('Corner uprights',   '4×', H+'"');
+  cl += row('Top rails (W)',      '2×', W+'"');
+  cl += row('Top rails (D)',      '2×', D+'"');
+  cl += row('Mid-span braces',   '2×', W+'"');
+  if(needsStiff){
+    cl += row('Panel stiffeners (W)', '2×', W+'"');
+    cl += row('Panel stiffeners (H)', '2×', H+'"');
+  }
+  cl += '<div class="csect">¼" OSB Panels</div>';
+  cl += row('Top lid panel',           '1×', W+'" × '+D+'"');
+  cl += row('Bottom panel (partial)',  '1×', W+'" × '+D+'"');
+  cl += row('Front &amp; back panels', '2×', W+'" × '+H+'"');
+  cl += row('Side panels',             '2×', D+'" × '+H+'"');
+  g('cutlist').innerHTML = cl;
+
+  /* ── notes ── */
+  var notes = [];
+  if(cW>96||cH>72) notes.push('<span class="w">⚠ Oversized</span> — confirm forklift clearance on base.');
+  if(sd < 6)       notes.push('<span class="w">⚠ Shallow depth</span> — verify foam does not compress sign face.');
+  if(wtLbs > 250)  notes.push('<span class="w">⚠ Heavy crate</span> — consider adding skid runner slots to base.');
+  notes.push('All prices in CAD. Update supplier prices in the left panel as rates change. Labour excludes overhead markup.');
+  g('notesbox').innerHTML = notes.join('<br>');
+
+  /* print meta */
+  var now = new Date();
+  g('pdate').textContent = 'Date: ' + now.toLocaleDateString('en-CA');
+  g('pref').textContent  = 'Ref: AS-' + Math.random().toString(36).substring(2,8).toUpperCase();
+
+  draw3D();
+}
+
+function row(label, pcs, len){
+  return '<div class="crow">'
+    +'<span>'+label+'</span>'
+    +'<span class="cpcs">'+pcs+'</span>'
+    +'<span class="clen">'+len+'</span>'
+    +'</div>';
+}
+
+/* ── attach all events ── */
+var inputs = document.querySelectorAll('input, select');
+for(var i=0;i<inputs.length;i++){
+  inputs[i].addEventListener('input', calc);
+  inputs[i].addEventListener('change', calc);
+}
+
+window.addEventListener('resize', function(){ draw3D(); });
+
+/* run on load */
+calc();
+</script>
+</body>
+</html>
